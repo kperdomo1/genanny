@@ -34,20 +34,16 @@ export async function invitePartner(formData: FormData) {
     };
   }
 
-  // Check if the invitee already has an account
-  // We look up by email in profiles via auth
-  const { data: inviteeProfile } = await supabase
-    .from("profiles")
-    .select("id")
-    .limit(1);
-
-  // We can't query auth.users directly from client, so we'll resolve
-  // the invitee_id when they accept. For now just store the email.
-  const { error } = await supabase.from("partners").insert({
-    inviter_id: user.id,
-    invitee_email: email,
-    status: "pending",
-  });
+  // Use upsert to handle edge cases where a previous invite exists
+  // but wasn't visible due to RLS issues
+  const { error } = await supabase.from("partners").upsert(
+    {
+      inviter_id: user.id,
+      invitee_email: email,
+      status: "pending",
+    },
+    { onConflict: "inviter_id,invitee_email" }
+  );
 
   if (error) {
     return { error: error.message };
