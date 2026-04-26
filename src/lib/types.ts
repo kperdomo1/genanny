@@ -31,7 +31,10 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   image_url: string | null;
+  user_id: string | null;
   created_at: string;
+  /** Joined from profiles — not always present */
+  sender?: { display_name: string | null } | null;
 }
 
 export interface KnowledgeEntry {

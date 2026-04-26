@@ -39,5 +39,5 @@ export default async function NewChatPage({
 
   if (!baby) redirect("/dashboard/babies");
 
-  return <ChatView babyId={baby.id} initialMessages={[]} />;
+  return <ChatView babyId={baby.id} initialMessages={[]} currentUserId={user.id} />;
 }

@@ -7,9 +7,11 @@ import type { Message } from "@/lib/types";
 export function ChatMessages({
   messages,
   streamingContent,
+  currentUserId,
 }: {
   messages: Message[];
   streamingContent: string | null;
+  currentUserId: string;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -31,13 +33,14 @@ export function ChatMessages({
       )}
 
       {messages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} />
+        <MessageBubble key={msg.id} message={msg} currentUserId={currentUserId} />
       ))}
 
       {streamingContent !== null && (
         <MessageBubble
-          message={{ role: "assistant", content: streamingContent, image_url: null }}
+          message={{ role: "assistant", content: streamingContent, image_url: null, user_id: null, created_at: new Date().toISOString() }}
           isStreaming
+          currentUserId={currentUserId}
         />
       )}
 

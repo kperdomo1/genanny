@@ -9,10 +9,12 @@ export function ChatView({
   babyId,
   initialConversationId,
   initialMessages,
+  currentUserId,
 }: {
   babyId: string;
   initialConversationId?: string;
   initialMessages: Message[];
+  currentUserId: string;
 }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [conversationId, setConversationId] = useState<string | undefined>(
@@ -33,7 +35,9 @@ export function ChatView({
         role: "user",
         content,
         image_url: imageUrl ?? null,
+        user_id: currentUserId,
         created_at: new Date().toISOString(),
+        sender: null, // "You" will be resolved by currentUserId match
       };
       setMessages((prev) => [...prev, userMessage]);
 
@@ -102,6 +106,7 @@ export function ChatView({
                   role: "assistant",
                   content: fullText,
                   image_url: null,
+                  user_id: null,
                   created_at: new Date().toISOString(),
                 };
                 setMessages((prev) => [...prev, assistantMessage]);
@@ -122,6 +127,7 @@ export function ChatView({
           role: "assistant",
           content: `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
           image_url: null,
+          user_id: null,
           created_at: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, errorMsg]);
@@ -135,7 +141,7 @@ export function ChatView({
 
   return (
     <div className="flex flex-1 flex-col">
-      <ChatMessages messages={messages} streamingContent={streamingContent} />
+      <ChatMessages messages={messages} streamingContent={streamingContent} currentUserId={currentUserId} />
       <ChatInput onSend={sendMessage} disabled={isLoading} />
     </div>
   );

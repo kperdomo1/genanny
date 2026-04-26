@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     role: "user",
     content: message,
     image_url: imageUrl ?? null,
+    user_id: user.id,
   });
 
   // Load conversation history
@@ -237,6 +238,7 @@ async function runMemoryExtraction({
       role: "user",
       content: userMessage,
       image_url: null,
+      user_id: null,
       created_at: new Date().toISOString(),
     },
     {
@@ -245,6 +247,7 @@ async function runMemoryExtraction({
       role: "assistant",
       content: fullResponse,
       image_url: null,
+      user_id: null,
       created_at: new Date().toISOString(),
     },
   ];

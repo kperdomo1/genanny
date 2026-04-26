@@ -25,10 +25,10 @@ export default async function ConversationPage({
 
   if (!conversation) notFound();
 
-  // Load messages
+  // Load messages with sender info
   const { data: messages } = await supabase
     .from("messages")
-    .select("*")
+    .select("*, sender:profiles!messages_user_id_fkey(display_name)")
     .eq("conversation_id", id)
     .order("created_at", { ascending: true });
 
@@ -37,6 +37,7 @@ export default async function ConversationPage({
       babyId={conversation.baby_id}
       initialConversationId={conversation.id}
       initialMessages={(messages as Message[]) ?? []}
+      currentUserId={user.id}
     />
   );
 }

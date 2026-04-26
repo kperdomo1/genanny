@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { KnowledgeEntry } from "@/lib/types";
 
+type EntryWithConv = KnowledgeEntry & {
+  conversation?: { title: string | null } | null;
+};
+
 const CATEGORY_META: Record<
   string,
   { label: string; emoji: string }
@@ -37,14 +41,14 @@ export default async function MemoryPage({
 
   const selectedBabyId = babyId ?? babies?.[0]?.id;
 
-  let entries: KnowledgeEntry[] = [];
+  let entries: EntryWithConv[] = [];
   if (selectedBabyId) {
     const { data } = await supabase
       .from("knowledge_entries")
-      .select("*")
+      .select("*, conversation:conversations!knowledge_entries_source_conversation_id_fkey(title)")
       .eq("baby_id", selectedBabyId)
       .order("updated_at", { ascending: false });
-    entries = (data as KnowledgeEntry[]) ?? [];
+    entries = (data as EntryWithConv[]) ?? [];
   }
 
   // Group by category
@@ -54,7 +58,7 @@ export default async function MemoryPage({
       acc[entry.category].push(entry);
       return acc;
     },
-    {} as Record<string, KnowledgeEntry[]>
+    {} as Record<string, EntryWithConv[]>
   );
 
   const babyName = babies?.find((b) => b.id === selectedBabyId)?.name;
@@ -122,37 +126,58 @@ export default async function MemoryPage({
                   </span>
                 </h2>
                 <div className="mt-2 space-y-2">
-                  {items.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="rounded-lg border border-gray-200 bg-white p-3"
-                    >
-                      <p className="text-sm text-gray-800">{entry.content}</p>
-                      <div className="mt-1.5 flex items-center gap-3 text-xs text-gray-400">
-                        {entry.date_referenced && (
-                          <span>
-                            {new Date(
-                              entry.date_referenced
-                            ).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
-                        )}
-                        <span>
-                          Updated{" "}
-                          {new Date(entry.updated_at).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                            }
+                  {items.map((entry) => {
+                    const inner = (
+                      <>
+                        <p className="text-sm text-gray-800">{entry.content}</p>
+                        <div className="mt-1.5 flex items-center gap-3 text-xs text-gray-400">
+                          {entry.date_referenced && (
+                            <span>
+                              {new Date(
+                                entry.date_referenced
+                              ).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
                           )}
-                        </span>
+                          <span>
+                            Updated{" "}
+                            {new Date(entry.updated_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </span>
+                          {entry.source_conversation_id && (
+                            <span className="text-indigo-500">
+                              View conversation &rarr;
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    );
+
+                    return entry.source_conversation_id ? (
+                      <Link
+                        key={entry.id}
+                        href={`/dashboard/chat/${entry.source_conversation_id}`}
+                        className="block rounded-lg border border-gray-200 bg-white p-3 hover:border-indigo-200 hover:shadow-sm transition-all"
+                      >
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div
+                        key={entry.id}
+                        className="rounded-lg border border-gray-200 bg-white p-3"
+                      >
+                        {inner}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
