@@ -29,12 +29,11 @@ export async function POST(request: NextRequest) {
     imageUrl?: string;
   } = body;
 
-  // Verify baby belongs to user
+  // Verify baby is accessible (RLS handles ownership + partner sharing)
   const { data: baby } = await supabase
     .from("babies")
     .select("*")
     .eq("id", babyId)
-    .eq("user_id", user.id)
     .single();
 
   if (!baby) {

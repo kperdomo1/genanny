@@ -16,12 +16,11 @@ export default async function ConversationPage({
 
   if (!user) redirect("/login");
 
-  // Load conversation with ownership check
+  // Load conversation (RLS handles ownership + partner sharing)
   const { data: conversation } = await supabase
     .from("conversations")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user.id)
     .single();
 
   if (!conversation) notFound();

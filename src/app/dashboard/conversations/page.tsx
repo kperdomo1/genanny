@@ -15,11 +15,10 @@ export default async function ConversationsPage({
 
   if (!user) redirect("/login");
 
-  // Get user's babies
+  // Get babies (RLS handles shared access)
   const { data: babies } = await supabase
     .from("babies")
     .select("id, name")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
   const selectedBabyId = babyId ?? babies?.[0]?.id;
@@ -38,7 +37,6 @@ export default async function ConversationsPage({
       .from("conversations")
       .select("id, title, summary, created_at, baby_id")
       .eq("baby_id", selectedBabyId)
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     conversations = data ?? [];
   }

@@ -21,7 +21,6 @@ export default async function NewChatPage({
     const { data: babies } = await supabase
       .from("babies")
       .select("id")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: true })
       .limit(1);
 
@@ -31,12 +30,11 @@ export default async function NewChatPage({
     selectedBabyId = babies[0].id;
   }
 
-  // Verify baby belongs to user
+  // Verify baby is accessible (RLS handles ownership + partner sharing)
   const { data: baby } = await supabase
     .from("babies")
     .select("id")
     .eq("id", selectedBabyId)
-    .eq("user_id", user.id)
     .single();
 
   if (!baby) redirect("/dashboard/babies");

@@ -53,8 +53,7 @@ export async function updateBaby(formData: FormData) {
       gender,
       notes,
     })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   if (error) {
     return { error: error.message };
@@ -73,11 +72,11 @@ export async function deleteBaby(formData: FormData) {
 
   const id = formData.get("id") as string;
 
+  // RLS handles authorization
   await supabase
     .from("babies")
     .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 
   redirect("/dashboard/babies");
 }

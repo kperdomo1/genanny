@@ -33,7 +33,6 @@ export default async function MemoryPage({
   const { data: babies } = await supabase
     .from("babies")
     .select("id, name")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
   const selectedBabyId = babyId ?? babies?.[0]?.id;

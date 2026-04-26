@@ -72,7 +72,7 @@ export async function acceptInvitation(formData: FormData) {
     .eq("id", partnerId)
     .eq("invitee_email", user.email?.toLowerCase());
 
-  redirect("/dashboard/settings");
+  redirect("/dashboard");
 }
 
 export async function removePartner(formData: FormData) {
