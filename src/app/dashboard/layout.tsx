@@ -38,10 +38,10 @@ export default async function DashboardLayout({
     profile = newProfile;
   }
 
+  // RLS handles shared access — select all babies visible to this user
   const { data: babies } = await supabase
     .from("babies")
     .select("*")
-    .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
   return (

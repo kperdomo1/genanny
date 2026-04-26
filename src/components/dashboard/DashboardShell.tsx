@@ -56,11 +56,25 @@ export function DashboardShell({
                 Conversations
               </Link>
               <Link
+                href="/dashboard/memory"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Memory
+              </Link>
+              <Link
                 href="/dashboard/babies"
                 onClick={() => setMenuOpen(false)}
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Manage babies
+              </Link>
+              <Link
+                href="/dashboard/settings"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Settings
               </Link>
               <form action={signOut}>
                 <button

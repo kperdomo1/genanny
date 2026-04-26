@@ -10,7 +10,6 @@ export default async function DashboardPage() {
   const { data: babies } = await supabase
     .from("babies")
     .select("*")
-    .eq("user_id", user!.id)
     .order("created_at", { ascending: true });
 
   if (!babies || babies.length === 0) {

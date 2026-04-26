@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import type { Baby } from "@/lib/types";
 
 export function BabyCard({ baby }: { baby: Baby }) {
@@ -38,7 +39,9 @@ export function BabyCard({ baby }: { baby: Baby }) {
         </Link>
       </div>
       {baby.notes && (
-        <p className="mt-2 text-sm text-gray-600">{baby.notes}</p>
+        <div className="mt-2 text-sm text-gray-600 prose-chat">
+          <ReactMarkdown>{baby.notes}</ReactMarkdown>
+        </div>
       )}
     </div>
   );
