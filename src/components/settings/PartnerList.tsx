@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormStatus } from "react-dom";
 import { removePartner } from "@/app/dashboard/settings/actions";
 
 interface Partner {
@@ -8,6 +9,19 @@ interface Partner {
   status: string;
   created_at: string;
   invitee?: { display_name: string | null } | null;
+}
+
+function RemoveButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="text-xs text-red-600 hover:text-red-500 disabled:opacity-50"
+    >
+      {pending ? "Removing..." : "Remove"}
+    </button>
+  );
 }
 
 export function PartnerList({
@@ -40,12 +54,7 @@ export function PartnerList({
             </div>
             <form action={removePartner}>
               <input type="hidden" name="partner_id" value={p.id} />
-              <button
-                type="submit"
-                className="text-xs text-red-600 hover:text-red-500"
-              >
-                Remove
-              </button>
+              <RemoveButton />
             </form>
           </div>
         ))}

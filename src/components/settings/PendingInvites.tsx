@@ -1,11 +1,25 @@
 "use client";
 
+import { useFormStatus } from "react-dom";
 import { acceptInvitation } from "@/app/dashboard/settings/actions";
 
 interface Invite {
   id: string;
   inviter: { display_name: string | null } | null;
   created_at: string;
+}
+
+function AcceptButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+    >
+      {pending ? "Accepting..." : "Accept"}
+    </button>
+  );
 }
 
 export function PendingInvites({ invites }: { invites: Invite[] }) {
@@ -26,12 +40,7 @@ export function PendingInvites({ invites }: { invites: Invite[] }) {
           </div>
           <form action={acceptInvitation}>
             <input type="hidden" name="partner_id" value={inv.id} />
-            <button
-              type="submit"
-              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
-            >
-              Accept
-            </button>
+            <AcceptButton />
           </form>
         </div>
       ))}
