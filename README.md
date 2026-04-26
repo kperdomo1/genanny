@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Genanny — Your 24/7 AI Pediatric Advisor
 
-## Getting Started
+AI-powered pediatric advisor that remembers everything about your baby. Built with Next.js, Supabase, and Gemini.
 
-First, run the development server:
+## Setup
+
+### 1. Clone and install
+
+```bash
+git clone <repo-url>
+cd genanny
+npm install
+```
+
+### 2. Supabase
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Run the SQL migrations in order from `supabase/migrations/`:
+   - `001_profiles_babies.sql`
+   - `002_conversations_messages.sql`
+   - `003_knowledge_entries.sql`
+   - `004_storage_chat_images.sql`
+3. Copy your project URL and anon key from Settings > API
+
+### 3. Google AI Studio
+
+1. Get an API key at [aistudio.google.com](https://aistudio.google.com/apikey)
+
+### 4. Environment variables
+
+```bash
+cp .env.local.example .env.local
+```
+
+Fill in:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `GOOGLE_API_KEY`
+
+### 5. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy to Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Push to GitHub
+2. Import in [vercel.com](https://vercel.com)
+3. Add the 3 environment variables in Vercel dashboard
+4. Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For Google OAuth: add your Vercel domain to Supabase Auth > URL Configuration > Redirect URLs.
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend**: Next.js 16 (App Router), Tailwind CSS v4, PWA via Serwist
+- **Backend**: Supabase (Auth, PostgreSQL, Storage)
+- **AI**: Gemini 2.5 Flash via Google AI Studio
+- **Deployment**: Vercel
