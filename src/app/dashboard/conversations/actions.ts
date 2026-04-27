@@ -13,11 +13,10 @@ export async function deleteConversation(formData: FormData) {
 
   const conversationId = formData.get("conversation_id") as string;
 
-  // Nullify source_conversation_id on linked knowledge entries
-  // (don't delete the knowledge — it's still valid, just unlinked)
+  // Delete knowledge entries extracted from this conversation
   await supabase
     .from("knowledge_entries")
-    .update({ source_conversation_id: null })
+    .delete()
     .eq("source_conversation_id", conversationId);
 
   // Delete conversation (messages cascade via FK)
