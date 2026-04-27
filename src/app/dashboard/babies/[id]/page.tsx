@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { BabyForm } from "@/components/babies/BabyForm";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { deleteBaby } from "../actions";
 
 export default async function EditBabyPage({
@@ -41,12 +42,9 @@ export default async function EditBabyPage({
 
       <form action={deleteBaby} className="mt-8 border-t border-gray-200 pt-6">
         <input type="hidden" name="id" value={baby.id} />
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors"
-        >
+        <SubmitButton pendingText="Deleting..." variant="danger" className="w-full">
           Delete {baby.name}&apos;s profile
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

@@ -98,11 +98,17 @@ export function MessageBubble({
             <div className="whitespace-pre-wrap break-words">
               {message.content}
             </div>
+          ) : isStreaming && !message.content ? (
+            <div className="flex items-center gap-1 py-1 px-1">
+              <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+              <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+              <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+            </div>
           ) : (
             <div className="prose-chat break-words">
               <ReactMarkdown>{message.content}</ReactMarkdown>
               {isStreaming && (
-                <span className="inline-block w-1.5 h-4 ml-0.5 bg-gray-400 animate-pulse rounded-sm align-text-bottom" />
+                <span className="inline-block w-0.5 h-[1.1em] ml-0.5 bg-gray-400 animate-pulse rounded-sm align-text-bottom" />
               )}
             </div>
           )}

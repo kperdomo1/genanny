@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ConversationCard } from "@/components/conversations/ConversationCard";
 
 export default async function ConversationsPage({
   searchParams,
@@ -84,33 +85,15 @@ export default async function ConversationsPage({
         </div>
       ) : (
         <div className="mt-6 space-y-3">
-          {conversations.map((conv) => {
-            const date = new Date(conv.created_at);
-            return (
-              <Link
-                key={conv.id}
-                href={`/dashboard/chat/${conv.id}`}
-                className="block rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-gray-900 truncate">
-                    {conv.title ?? "Untitled conversation"}
-                  </h3>
-                  <span className="shrink-0 text-xs text-gray-400 ml-2">
-                    {date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-                {conv.summary && (
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                    {conv.summary}
-                  </p>
-                )}
-              </Link>
-            );
-          })}
+          {conversations.map((conv) => (
+            <ConversationCard
+              key={conv.id}
+              id={conv.id}
+              title={conv.title}
+              summary={conv.summary}
+              created_at={conv.created_at}
+            />
+          ))}
         </div>
       )}
     </div>
