@@ -117,10 +117,20 @@ export async function POST(request: NextRequest) {
   if (imageUrl) {
     try {
       const imgResponse = await fetch(imageUrl);
-      const imgBuffer = await imgResponse.arrayBuffer();
-      const base64 = Buffer.from(imgBuffer).toString("base64");
-      const mimeType = imgResponse.headers.get("content-type") ?? "image/jpeg";
-      messageParts.push({ inlineData: { mimeType, data: base64 } });
+      if (!imgResponse.ok) {
+        console.error("Failed to fetch image:", imgResponse.status);
+      } else {
+        const imgBuffer = await imgResponse.arrayBuffer();
+        // Skip if image is too large for Gemini (>4MB base64 ≈ 3MB binary)
+        if (imgBuffer.byteLength <= 3 * 1024 * 1024) {
+          const base64 = Buffer.from(imgBuffer).toString("base64");
+          const mimeType = imgResponse.headers.get("content-type") ?? "image/jpeg";
+          messageParts.push({ inlineData: { mimeType, data: base64 } });
+        } else {
+          console.warn("Image too large for Gemini, sending text only");
+          messageParts.push({ text: "(An image was attached but was too large to process)" });
+        }
+      }
     } catch (err) {
       console.error("Failed to fetch image for Gemini:", err);
     }

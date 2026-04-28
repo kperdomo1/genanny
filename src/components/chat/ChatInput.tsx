@@ -34,12 +34,15 @@ export function ChatInput({
     return data.url;
   }
 
+  const [error, setError] = useState<string | null>(null);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = value.trim();
     if ((!trimmed && !imageFile) || disabled || uploading) return;
 
     setUploading(true);
+    setError(null);
 
     try {
       let imageUrl: string | undefined;
@@ -58,7 +61,8 @@ export function ChatInput({
         textareaRef.current.style.height = "auto";
       }
     } catch (err) {
-      console.error("Failed to send:", err);
+      const msg = err instanceof Error ? err.message : "Failed to send";
+      setError(msg);
     } finally {
       setUploading(false);
     }
@@ -104,6 +108,14 @@ export function ChatInput({
       onSubmit={handleSubmit}
       className="border-t border-gray-200 bg-white px-4 py-3"
     >
+      {/* Upload error */}
+      {error && (
+        <div className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 flex items-center justify-between">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)} className="ml-2 text-red-400 hover:text-red-600">&times;</button>
+        </div>
+      )}
+
       {/* Image preview */}
       {imagePreview && (
         <div className="mb-2 relative inline-block">

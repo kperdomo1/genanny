@@ -1,5 +1,9 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import sharp from "sharp";
+
+const MAX_DIMENSION = 1600; // Max width/height — good enough for context photos
+const JPEG_QUALITY = 80;
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -33,35 +37,48 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Validate file size (5MB)
-  if (file.size > 5 * 1024 * 1024) {
+  // Validate file size (10MB raw — we'll compress before storing)
+  if (file.size > 10 * 1024 * 1024) {
     return Response.json(
-      { error: "File too large. Maximum size is 5MB." },
+      { error: "File too large. Maximum size is 10MB." },
       { status: 400 }
     );
   }
 
-  // Generate a unique filename under the user's folder
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const filename = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  try {
+    // Resize and compress to JPEG
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const compressed = await sharp(buffer)
+      .resize(MAX_DIMENSION, MAX_DIMENSION, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: JPEG_QUALITY })
+      .toBuffer();
 
-  const { data, error } = await supabase.storage
-    .from("chat-images")
-    .upload(filename, file, {
-      contentType: file.type,
-      upsert: false,
-    });
+    const filename = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
 
-  if (error) {
-    return Response.json(
-      { error: `Upload failed: ${error.message}` },
-      { status: 500 }
-    );
+    const { data, error } = await supabase.storage
+      .from("chat-images")
+      .upload(filename, compressed, {
+        contentType: "image/jpeg",
+        upsert: false,
+      });
+
+    if (error) {
+      return Response.json(
+        { error: `Upload failed: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("chat-images").getPublicUrl(data.path);
+
+    return Response.json({ url: publicUrl, path: data.path });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Processing failed";
+    return Response.json({ error: message }, { status: 500 });
   }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("chat-images").getPublicUrl(data.path);
-
-  return Response.json({ url: publicUrl, path: data.path });
 }
