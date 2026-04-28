@@ -84,7 +84,6 @@ export function ImageGallery({
       {/* Image */}
       <div
         className="flex items-center justify-center w-full h-full p-8"
-        onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -93,6 +92,7 @@ export function ImageGallery({
           alt={`Image ${index + 1}`}
           className="max-h-full max-w-full object-contain rounded-lg select-none"
           draggable={false}
+          onClick={(e) => e.stopPropagation()}
         />
       </div>
 
