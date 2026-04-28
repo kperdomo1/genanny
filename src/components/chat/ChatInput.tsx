@@ -2,21 +2,24 @@
 
 import { useRef, useState } from "react";
 
+const MAX_IMAGES = 3;
+
 export function ChatInput({
   onSend,
   disabled,
 }: {
-  onSend: (message: string, imageUrl?: string) => void;
+  onSend: (message: string, imageUrls?: string[]) => void;
   disabled: boolean;
 }) {
   const [value, setValue] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function uploadImage(file: File): Promise<string | null> {
+  async function uploadImage(file: File): Promise<string> {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -34,28 +37,26 @@ export function ChatInput({
     return data.url;
   }
 
-  const [error, setError] = useState<string | null>(null);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = value.trim();
-    if ((!trimmed && !imageFile) || disabled || uploading) return;
+    if ((!trimmed && imageFiles.length === 0) || disabled || uploading) return;
 
     setUploading(true);
     setError(null);
 
     try {
-      let imageUrl: string | undefined;
+      let imageUrls: string[] | undefined;
 
-      if (imageFile) {
-        const url = await uploadImage(imageFile);
-        if (url) imageUrl = url;
+      if (imageFiles.length > 0) {
+        const urls = await Promise.all(imageFiles.map(uploadImage));
+        imageUrls = urls;
       }
 
-      onSend(trimmed || "(image attached)", imageUrl);
+      onSend(trimmed || "(image attached)", imageUrls);
       setValue("");
-      setImageFile(null);
-      setImagePreview(null);
+      setImageFiles([]);
+      setImagePreviews([]);
 
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
@@ -84,21 +85,38 @@ export function ChatInput({
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
 
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const remaining = MAX_IMAGES - imageFiles.length;
+    if (remaining <= 0) {
+      setError(`You can attach up to ${MAX_IMAGES} images per message.`);
+      e.target.value = "";
+      return;
+    }
 
-    // Reset input so same file can be re-selected
+    const toAdd = files.slice(0, remaining);
+    if (files.length > remaining) {
+      setError(`You can attach up to ${MAX_IMAGES} images per message. ${files.length - remaining} image(s) were skipped.`);
+    }
+
+    setImageFiles((prev) => [...prev, ...toAdd]);
+
+    toAdd.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreviews((prev) => [...prev, ev.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+
     e.target.value = "";
   }
 
-  function removeImage() {
-    setImageFile(null);
-    setImagePreview(null);
+  function removeImage(index: number) {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setError(null);
   }
 
   const isDisabled = disabled || uploading;
@@ -116,21 +134,25 @@ export function ChatInput({
         </div>
       )}
 
-      {/* Image preview */}
-      {imagePreview && (
-        <div className="mb-2 relative inline-block">
-          <img
-            src={imagePreview}
-            alt="Attachment preview"
-            className="h-20 w-20 rounded-lg object-cover border border-gray-200"
-          />
-          <button
-            type="button"
-            onClick={removeImage}
-            className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-white text-xs hover:bg-gray-600"
-          >
-            &times;
-          </button>
+      {/* Image previews */}
+      {imagePreviews.length > 0 && (
+        <div className="mb-2 flex gap-2">
+          {imagePreviews.map((preview, i) => (
+            <div key={i} className="relative">
+              <img
+                src={preview}
+                alt={`Attachment ${i + 1}`}
+                className="h-20 w-20 rounded-lg object-cover border border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-700 text-white text-xs hover:bg-gray-600"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -139,7 +161,7 @@ export function ChatInput({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isDisabled}
+          disabled={isDisabled || imageFiles.length >= MAX_IMAGES}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
         >
           <svg
@@ -160,6 +182,7 @@ export function ChatInput({
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          multiple
           onChange={handleFileSelect}
           className="hidden"
         />
@@ -178,37 +201,16 @@ export function ChatInput({
 
         <button
           type="submit"
-          disabled={isDisabled || (!value.trim() && !imageFile)}
+          disabled={isDisabled || (!value.trim() && imageFiles.length === 0)}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 transition-colors"
         >
           {uploading ? (
-            <svg
-              className="h-5 w-5 animate-spin"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
+            <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-5 w-5"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
               <path d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.926A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.086l-1.414 4.926a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.293-7.155.75.75 0 0 0 0-1.114A28.897 28.897 0 0 0 3.105 2.288Z" />
             </svg>
           )}

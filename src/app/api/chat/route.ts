@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
     conversationId,
     babyId,
     message,
-    imageUrl,
+    imageUrls,
   }: {
     conversationId?: string;
     babyId: string;
     message: string;
-    imageUrl?: string;
+    imageUrls?: string[];
   } = body;
 
   // Verify baby is accessible (RLS handles ownership + partner sharing)
@@ -62,12 +62,14 @@ export async function POST(request: NextRequest) {
     convId = conv.id;
   }
 
-  // Save user message
+  // Save user message (store image URLs as JSON array)
+  const imageUrlValue =
+    imageUrls && imageUrls.length > 0 ? JSON.stringify(imageUrls) : null;
   await supabase.from("messages").insert({
     conversation_id: convId,
     role: "user",
     content: message,
-    image_url: imageUrl ?? null,
+    image_url: imageUrlValue,
     user_id: user.id,
   });
 
@@ -110,29 +112,29 @@ export async function POST(request: NextRequest) {
       parts: [{ text: m.content }],
     }));
 
-  // Build the message parts (text + optional image)
+  // Build the message parts (text + optional images)
   const messageParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
 
-  // If image is attached, download and convert to base64
-  if (imageUrl) {
-    try {
-      const imgResponse = await fetch(imageUrl);
-      if (!imgResponse.ok) {
-        console.error("Failed to fetch image:", imgResponse.status);
-      } else {
+  // Download and convert images to base64 for Gemini
+  if (imageUrls && imageUrls.length > 0) {
+    for (const url of imageUrls) {
+      try {
+        const imgResponse = await fetch(url);
+        if (!imgResponse.ok) {
+          console.error("Failed to fetch image:", imgResponse.status);
+          continue;
+        }
         const imgBuffer = await imgResponse.arrayBuffer();
-        // Skip if image is too large for Gemini (>4MB base64 ≈ 3MB binary)
         if (imgBuffer.byteLength <= 3 * 1024 * 1024) {
           const base64 = Buffer.from(imgBuffer).toString("base64");
           const mimeType = imgResponse.headers.get("content-type") ?? "image/jpeg";
           messageParts.push({ inlineData: { mimeType, data: base64 } });
         } else {
-          console.warn("Image too large for Gemini, sending text only");
-          messageParts.push({ text: "(An image was attached but was too large to process)" });
+          console.warn("Image too large for Gemini, skipping");
         }
+      } catch (err) {
+        console.error("Failed to fetch image for Gemini:", err);
       }
-    } catch (err) {
-      console.error("Failed to fetch image for Gemini:", err);
     }
   }
 

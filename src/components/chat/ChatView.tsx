@@ -24,9 +24,13 @@ export function ChatView({
   const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = useCallback(
-    async (content: string, imageUrl?: string) => {
+    async (content: string, imageUrls?: string[]) => {
       setIsLoading(true);
       setStreamingContent("");
+
+      // Store image URLs as JSON array
+      const imageUrlValue =
+        imageUrls && imageUrls.length > 0 ? JSON.stringify(imageUrls) : null;
 
       // Optimistically add user message
       const userMessage: Message = {
@@ -34,10 +38,10 @@ export function ChatView({
         conversation_id: conversationId ?? "",
         role: "user",
         content,
-        image_url: imageUrl ?? null,
+        image_url: imageUrlValue,
         user_id: currentUserId,
         created_at: new Date().toISOString(),
-        sender: null, // "You" will be resolved by currentUserId match
+        sender: null,
       };
       setMessages((prev) => [...prev, userMessage]);
 
@@ -49,7 +53,7 @@ export function ChatView({
             conversationId,
             babyId,
             message: content,
-            imageUrl,
+            imageUrls,
           }),
         });
 

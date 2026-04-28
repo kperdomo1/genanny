@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { ImageGallery } from "./ImageGallery";
+import { getImageUrls } from "@/lib/types";
 import type { Message } from "@/lib/types";
 
 function formatTime(dateStr: string): string {
@@ -57,63 +60,94 @@ export function MessageBubble({
 }) {
   const isUser = message.role === "user";
   const senderName = getSenderName(message, currentUserId);
+  const imageUrls = getImageUrls(message.image_url ?? null);
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
-      <div className={`max-w-[85%] ${isUser ? "items-end" : "items-start"} flex flex-col`}>
-        {/* Sender name + timestamp */}
-        {senderName && (
-          <div
-            className={`flex items-center gap-1.5 mb-0.5 px-1 ${
-              isUser ? "flex-row-reverse" : "flex-row"
-            }`}
-          >
-            <span className="text-[11px] font-medium text-gray-500">
-              {senderName}
-            </span>
-            {!isStreaming && message.created_at && (
-              <span className="text-[10px] text-gray-400">
-                {formatTime(message.created_at)}
+    <>
+      <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
+        <div className={`max-w-[85%] ${isUser ? "items-end" : "items-start"} flex flex-col`}>
+          {/* Sender name + timestamp */}
+          {senderName && (
+            <div
+              className={`flex items-center gap-1.5 mb-0.5 px-1 ${
+                isUser ? "flex-row-reverse" : "flex-row"
+              }`}
+            >
+              <span className="text-[11px] font-medium text-gray-500">
+                {senderName}
               </span>
-            )}
-          </div>
-        )}
-
-        {/* Bubble */}
-        <div
-          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-            isUser
-              ? "bg-indigo-600 text-white rounded-br-md"
-              : "bg-gray-100 text-gray-900 rounded-bl-md"
-          }`}
-        >
-          {message.image_url && (
-            <img
-              src={message.image_url}
-              alt="Attached image"
-              className="mb-2 max-h-48 rounded-lg object-cover"
-            />
-          )}
-          {isUser ? (
-            <div className="whitespace-pre-wrap break-words">
-              {message.content}
-            </div>
-          ) : isStreaming && !message.content ? (
-            <div className="flex items-center gap-1 py-1 px-1">
-              <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
-              <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
-              <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
-            </div>
-          ) : (
-            <div className="prose-chat break-words">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
-              {isStreaming && (
-                <span className="inline-block w-0.5 h-[1.1em] ml-0.5 bg-gray-400 animate-pulse rounded-sm align-text-bottom" />
+              {!isStreaming && message.created_at && (
+                <span className="text-[10px] text-gray-400">
+                  {formatTime(message.created_at)}
+                </span>
               )}
             </div>
           )}
+
+          {/* Bubble */}
+          <div
+            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              isUser
+                ? "bg-indigo-600 text-white rounded-br-md"
+                : "bg-gray-100 text-gray-900 rounded-bl-md"
+            }`}
+          >
+            {/* Images */}
+            {imageUrls.length > 0 && (
+              <div className={`mb-2 flex gap-1.5 ${imageUrls.length === 1 ? "" : "flex-wrap"}`}>
+                {imageUrls.map((url, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setGalleryIndex(i)}
+                    className="block overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  >
+                    <img
+                      src={url}
+                      alt={`Attachment ${i + 1}`}
+                      className={`object-cover ${
+                        imageUrls.length === 1
+                          ? "max-h-48 rounded-lg"
+                          : "h-24 w-24 rounded-lg"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Text content */}
+            {isUser ? (
+              <div className="whitespace-pre-wrap break-words">
+                {message.content}
+              </div>
+            ) : isStreaming && !message.content ? (
+              <div className="flex items-center gap-1 py-1 px-1">
+                <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+                <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+                <span className="typing-dot h-2 w-2 rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+              </div>
+            ) : (
+              <div className="prose-chat break-words">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                {isStreaming && (
+                  <span className="inline-block w-0.5 h-[1.1em] ml-0.5 bg-gray-400 animate-pulse rounded-sm align-text-bottom" />
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Fullscreen gallery */}
+      {galleryIndex !== null && (
+        <ImageGallery
+          images={imageUrls}
+          initialIndex={galleryIndex}
+          onClose={() => setGalleryIndex(null)}
+        />
+      )}
+    </>
   );
 }
